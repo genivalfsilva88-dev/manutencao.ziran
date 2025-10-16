@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ZIRAN • Manutenção (CSV / XLSX / Google Sheets)</title>
+<title>ZIRAN • Manutenção (CSV/XLSX/Google Sheets)</title>
 
 <!-- Libs via CDN -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -12,22 +12,18 @@
 
 <style>
 :root{
-  /* Paleta alinhada à marca (vermelho + tons de cinza ardósia) */
-  --neg:#C8102E; --pos:#374151; --neu:#6B7280; --neu2:#D1D5DB;
+  /* Paleta alinhada ao logo */
+  --neg:#C8102E; --pos:#1AAA55; --neu:#334155; --neu2:#CBD5E1;
   --txt:#111827; --bg:#F7F7F8; --card:#fff; --g200:#E5E7EB;
   --r:14px; --sh:0 10px 24px rgba(16,24,40,.08)
 }
 *{box-sizing:border-box}
+html,body{height:100%}
 body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt)}
 .app{max-width:1400px;margin:16px auto;display:grid;grid-template-columns:320px 1fr;gap:16px;padding:0 12px 24px}
 .sidebar{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:16px;position:sticky;top:12px;height:calc(100vh - 24px);overflow:auto}
-.brand{display:flex;align-items:center;gap:12px}
-.brand .logo{
-  height:52px;
-  width:auto;
-  object-fit:contain;
-  display:block;
-}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.brand img{height:42px;width:auto;object-fit:contain}
 .brand h1{margin:0;font-size:18px;color:var(--neg)}
 .hr{height:1px;background:var(--g200);margin:12px 0}
 .field{margin-bottom:12px}
@@ -55,16 +51,14 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 10px;border-bottom:1px solid var(--g200);text-align:left}
 th{color:#6b7280;background:#fafafa}
 .view{display:none} .view.active{display:block}
-
-/* Modal mapeamento */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50}
-.modal .box{background:#fff;border-radius:16px;box-shadow:var(--sh);padding:20px;max-width:780px;width:92%}
-.modal h3{margin:0 0 12px 0}
-.grid-map{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.note{font-size:12px;color:#6b7280;margin-bottom:8px}
-.list .list-item{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px dashed #eee}
 .badge{background:#f3f4f6;border-radius:999px;padding:2px 8px}
+.list .list-item{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px dashed #eee}
 
+/* Tamanho profissional dos doughnuts */
+.donut-wrap{height:360px; position:relative}
+.donut-wrap canvas{position:absolute; inset:12px}
+
+/* Melhor responsividade */
 @media(max-width:1100px){
   .app{grid-template-columns:1fr}
   .kpi-row{grid-template-columns:repeat(4,1fr)}
@@ -76,28 +70,30 @@ th{color:#6b7280;background:#fafafa}
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
-      <img class="logo" src="./Logo Ziran.jpg" alt="ZIRAN" />
+      <img src="https://raw.githubusercontent.com/aa-santos/assets/refs/heads/main/ziran-logo-red.png" alt="ZIRAN"/>
       <h1>Controle de manutenção</h1>
     </div>
-    <div class="hr"></div>
 
     <div class="field">
-      <label>Fonte Google Sheets (URL da planilha ou da aba publicada)</label>
+      <label>Fonte Google Sheets (URL da aba publicada como CSV)</label>
       <div class="row">
-        <input id="urlInput" class="input" placeholder="Cole o link do Google Sheets (ou Export CSV)"/>
-        <button id="btnLoadUrl" class="btn primary" title="Carregar">Carregar</button>
+        <input id="urlInput" class="input" placeholder="Cole o link publicado (…/pub?gid=…&output=csv)"/>
+        <button id="btnLoadUrl" class="btn primary">Carregar</button>
       </div>
-      <div class="small">Dica: pode colar <b>qualquer URL</b> do Sheets (ex.: .../edit#gid=123); eu converto para CSV e tento <b>export</b> e <b>gviz</b>.</div>
       <div class="row" style="margin-top:8px">
         <button id="btnRefresh" class="btn ghost" title="Recarregar dados">🔄 Recarregar</button>
         <label class="row small" style="gap:6px"><input type="checkbox" id="autoRefresh"/> Auto a cada 5 min</label>
       </div>
+      <div class="small">Dica: pode colar <b>qualquer URL</b> do Sheets (ex.: .../edit#gid=123); eu converto para CSV e tento <b>export</b> e <b>gviz</b>.</div>
     </div>
 
     <div class="field">
-      <label>Ou importar XLS/CSV do computador</label>
-      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" class="input"/>
+      <label>Base de Ativos (opcional – múltiplas abas CSV)</label>
+      <input id="baseAtivos" class="input" placeholder="Cole 1–3 URLs CSV (Caminhões, Implementos, Máquinas) separados por vírgula"/>
+      <div class="small">Se informada, habilita listas de <b>Sem lavagem</b> e <b>Sem lubrificação</b>.</div>
+      <div class="small" id="baseInfo" style="margin-top:6px;color:#059669;display:none"></div>
     </div>
+
     <div class="hr"></div>
 
     <div class="field"><label>Busca (OS / Defeito / Ativo)</label><input id="filterBusca" class="input" placeholder="Ex.: 12345, bomba, ABC-1234"/></div>
@@ -137,9 +133,10 @@ th{color:#6b7280;background:#fafafa}
           <div class="kpi"><div class="label" id="labelDelta">Δ vs período</div><div class="value" id="kpiDelta">-</div></div>
           <div class="kpi"><div class="label">MTBF (dias)</div><div class="value" id="kpiMtbf">-</div></div>
         </div>
+
         <div class="grid-3">
-          <div class="card"><h3>Tipo O.S</h3><canvas id="chartTipo"></canvas></div>
-          <div class="card"><h3>Status O.S</h3><canvas id="chartStatus"></canvas></div>
+          <div class="card"><h3>Tipo O.S</h3><div class="donut-wrap"><canvas id="chartTipo"></canvas></div></div>
+          <div class="card"><h3>Status O.S</h3><div class="donut-wrap"><canvas id="chartStatus"></canvas></div></div>
           <div class="card"><h3>Maiores Defeitos</h3><div class="list" id="listaDefeitos"></div></div>
         </div>
         <div class="grid-2">
@@ -164,11 +161,12 @@ th{color:#6b7280;background:#fafafa}
           <div class="card"><h3 id="titleLav">O.S (Lavagem) por Mês</h3><canvas id="chartLav"></canvas></div>
           <div class="card">
             <h3>Ativos lavados (detalhe)</h3>
-            <table id="tLavados">
-              <thead><tr><th>Data</th><th>Nº O.S</th><th>Ativo</th><th>Status</th><th>Tipo O.S</th><th>Defeito</th></tr></thead>
-              <tbody></tbody>
-            </table>
+            <table id="tLavados"><thead><tr><th>Data</th><th>Nº O.S</th><th>Ativo</th><th>Status</th><th>Tipo O.S</th><th>Defeito</th></tr></thead><tbody></tbody></table>
           </div>
+        </div>
+        <div class="card" id="boxSemLav" style="display:none">
+          <h3>Ativos sem lavagem (no período/filtros)</h3>
+          <table id="tSemLav"><thead><tr><th>Ativo</th><th>Última O.S</th><th>Data última O.S</th></tr></thead><tbody></tbody></table>
         </div>
       </section>
 
@@ -180,17 +178,11 @@ th{color:#6b7280;background:#fafafa}
         <div class="grid-2">
           <div class="card">
             <h3>Ativos lubrificados (detalhe)</h3>
-            <table id="tLubrificados">
-              <thead><tr><th>Data</th><th>Nº O.S</th><th>Ativo</th><th>Status</th><th>Tipo O.S</th><th>Defeito</th></tr></thead>
-              <tbody></tbody>
-            </table>
+            <table id="tLubrificados"><thead><tr><th>Data</th><th>Nº O.S</th><th>Ativo</th><th>Status</th><th>Tipo O.S</th><th>Defeito</th></tr></thead><tbody></tbody></table>
           </div>
-          <div class="card">
-            <h3>Sem registros no período</h3>
-            <div class="grid-2">
-              <div><h4>Ativos sem lavagem</h4><div class="list" id="listaSemLav"></div></div>
-              <div><h4>Ativos sem lubrificação</h4><div class="list" id="listaSemLub"></div></div>
-            </div>
+          <div class="card" id="boxSemLub" style="display:none">
+            <h3>Ativos sem lubrificação (no período/filtros)</h3>
+            <table id="tSemLub"><thead><tr><th>Ativo</th><th>Última O.S</th><th>Data última O.S</th></tr></thead><tbody></tbody></table>
           </div>
         </div>
       </section>
@@ -211,89 +203,23 @@ th{color:#6b7280;background:#fafafa}
   </main>
 </div>
 
-<!-- Modal de mapeamento -->
-<div id="mapModal" class="modal" aria-hidden="true">
-  <div class="box">
-    <h3>Mapear colunas da sua planilha</h3>
-    <div class="note">Selecione, para cada campo, a coluna correspondente no seu arquivo.</div>
-    <div class="grid-map">
-      <label>Data <select id="mapData" class="select"></select></label>
-      <label>Tipo O.S <select id="mapTipo" class="select"></select></label>
-      <label>Status <select id="mapStatus" class="select"></select></label>
-      <label>Ativo/Placa <select id="mapPlaca" class="select"></select></label>
-      <label>Defeito <select id="mapDefeito" class="select"></select></label>
-      <label>Reincidência 90d <select id="mapReinc" class="select"></select></label>
-      <label>Número O.S <select id="mapOS" class="select"></select></label>
-      <label>Tipo de Ativo <select id="mapTipoAtivo" class="select"></select></label>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-      <button id="mapCancel" class="btn">Cancelar</button>
-      <button id="mapOk" class="btn primary">Aplicar</button>
-    </div>
-  </div>
-</div>
-
 <script>
 /* ===================== Estado global ===================== */
 let RAW = [];        // linhas normalizadas
 let FILTERED = [];   // linhas após filtros
 let charts = {};     // refs Chart.js
-let MAP = null;      // mapeamento de colunas
-let LAST_URL = null; // última URL carregada (Sheets/CSV)
-let AUTO_T = null;   // timer de auto refresh
+let MAP = null;      // mapeamento de colunas (auto)
+let LAST_URL = null; // última URL de dados principal
+let AUTO_T = null;   // timer auto refresh
+let BASE_ATIVOS = new Set(); // ativos da base (Caminhões/Implementos/Máquinas)
 
-/* ===================== Utilidades básicas ===================== */
+/* ===================== Utilidades ===================== */
 const COL = {neg:'var(--neg)', pos:'var(--pos)', neu:'var(--neu)', neu2:'var(--neu2)', txt:'var(--txt)'};
 const BR  = new Intl.NumberFormat('pt-BR');
 const PCT = new Intl.NumberFormat('pt-BR',{style:'percent',maximumFractionDigits:1});
-Chart.defaults.color = COL.txt;
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--txt').trim();
 
-// === Resolve cores do tema para o Chart.js
-function resolveThemeColors(){
-  const root = getComputedStyle(document.documentElement);
-  function pick(v, fallback){ const val = root.getPropertyValue(v).trim(); return val || fallback; }
-  COL.neg = pick('--neg', '#C8102E');
-  COL.pos = pick('--pos', '#374151');
-  COL.neu = pick('--neu', '#6B7280');
-  COL.neu2= pick('--neu2','#D1D5DB');
-  COL.txt = pick('--txt', '#111827');
-  Chart.defaults.color = COL.txt;
-}
-resolveThemeColors();
-
-// ========= Paleta alinhada à marca ZIRAN =========
-const BRAND = {
-  primary: '#C8102E',  // vermelho logo
-  charcoal: '#111827',
-  slate: '#374151',
-  grey: '#6B7280',
-  silver: '#9CA3AF',
-  mist: '#D1D5DB'
-};
-function colorTipoOS(lbl){
-  const L = (lbl||'').toUpperCase();
-  if (L.includes('CORRET')) return BRAND.primary;        // Corretiva = vermelho
-  if (L.includes('PREVENT')) return BRAND.slate;         // Preventiva = ardósia
-  if (/\bLAVAGEM\b/.test(L))   return BRAND.grey;        // Lavagem = cinza médio
-  if ((/\bLAVAR\b/.test(L) && /\bLUB/.test(L)) || /LAVAR\s*\/\s*LUBRIFICAR/.test(L)) return BRAND.charcoal;
-  if (L.includes('BORRACH') || L.includes('PNEU')) return BRAND.silver; // Borracharia/Pneus
-  if (L.includes('SOCOR')) return BRAND.mist;            // Socorro = cinza claro
-  const fallback = [BRAND.charcoal, BRAND.slate, BRAND.grey, BRAND.silver, BRAND.mist];
-  let h=0; for(let i=0;i<L.length;i++) h=(h*31 + L.charCodeAt(i))>>>0;
-  return fallback[h % fallback.length];
-}
-
-function codeStatus(s){
-  s = (s||'').toUpperCase().trim();
-  if (s==='A'||s==='F') return s;
-  if (s.startsWith('ABER')) return 'A';
-  if (s.startsWith('FECH') || s.startsWith('ENCERR')) return 'F';
-  return s;
-}
-function mapStatusDisplay(s){
-  const c = codeStatus(s);
-  return c==='A' ? 'Aberta' : (c==='F' ? 'Fechada' : (s||''));
-}
+/* Datas */
 function parseDate(d){
   if (!d) return null;
   if (d instanceof Date) return d;
@@ -315,30 +241,37 @@ function isoWeekKey(dt){
 function weekLabel(k){ const [y,w]=k.split('-W'); return 'Semana '+w+'/'+y; }
 function getGrouping(){ return (document.getElementById('filterGroup').value || 'mensal'); }
 
-/* ===================== Normalização e Mapeamento ===================== */
+/* Status */
+function codeStatus(s){
+  s = (s||'').toUpperCase().trim();
+  if (s==='A'||s==='F') return s;
+  if (s.startsWith('ABER')) return 'A';
+  if (s.startsWith('FECH') || s.startsWith('ENCERR')) return 'F';
+  return s;
+}
+function mapStatusDisplay(s){
+  const c = codeStatus(s);
+  return c==='A' ? 'Aberta' : (c==='F' ? 'Fechada' : (s||''));}
+
+/* Normalização e mapeamento */
 function autoDetectMap(headers){
   const H = headers.map(h => String(h||'').toLowerCase());
-  function find(){
-    for (let i=0;i<arguments.length;i++){
-      const a = String(arguments[i]).toLowerCase();
-      let idx = H.findIndex(x => x === a);         if (idx >= 0) return headers[idx];
-          idx = H.findIndex(x => x.includes(a));   if (idx >= 0) return headers[idx];
-    }
-    return '';
-  }
+  function find(){ for (let a of arguments){ a=String(a).toLowerCase();
+    let i = H.findIndex(x => x===a); if(i>=0) return headers[i];
+    i = H.findIndex(x => x.includes(a)); if(i>=0) return headers[i]; }
+    return ''; }
   return {
     data:   find('data','dt','abertura','emissão','emissao','abert','date'),
-    tipo:   find('tipo o.s','tipo os','tipo o.s.','tipo o. s.','tipo','tp'),
+    tipo:   find('tipo o.s','tipo os','tipo o.s.','tipo os','tipo','tp'),
     status: find('status','situação','situacao','state'),
-    placa:  find('carro','placa','ativo','veiculo','veículo','equipamento','asset','placa / defeito','placa_defeito','placa defeito'),
+    placa:  find('carro','placa','ativo','veiculo','veículo','equipamento','asset'),
     defeito:find('defeito','serviço','servico','descricao','descrição','falha','ocorrencia','ocorrência'),
     reinc:  find('reincidência_90d','reincidencia_90d','reincid','90'),
     os:     find('número os','numero os','nº os','num os','os','ordem','chamado'),
-    tipo_ativo: find('tipo_ativo','tipo de ativo','categoria','grupo')
+    tipo_ativo: find('tipo_ativo','tipo do ativo','classe','categoria')
   };
 }
-
-function doTransform(rows, map){
+function transform(rows, map){
   return rows.map(o => ({
     data:     parseDate(o[map.data]),
     tipo_os:  (o[map.tipo]||'').toString().trim(),
@@ -348,55 +281,11 @@ function doTransform(rows, map){
     defeito:  (o[map.defeito]||'').toString().trim(),
     reinc:    (o[map.reinc]||'').toString().trim(),
     numero_os:(o[map.os]||'').toString().trim(),
-    tipo_ativo:(o[map.tipo_ativo]||'').toString().trim()
+    tipo_ativo:(o[map.tipo_ativo]||'').toString().trim(),
   })).filter(r => r.data);
 }
 
-function fillMapDropdowns(headers){
-  const ids = ['mapData','mapTipo','mapStatus','mapPlaca','mapDefeito','mapReinc','mapOS','mapTipoAtivo'];
-  for (const id of ids){
-    const sel = document.getElementById(id);
-    sel.innerHTML = '';
-    headers.forEach(h=>{
-      const o = document.createElement('option'); o.value = h; o.textContent = h; sel.appendChild(o);
-    });
-  }
-}
-function showMapper(headers, initial){
-  fillMapDropdowns(headers);
-  document.getElementById('mapData').value    = initial.data    || headers[0];
-  document.getElementById('mapTipo').value    = initial.tipo    || headers[1]||headers[0];
-  document.getElementById('mapStatus').value  = initial.status  || headers[2]||headers[0];
-  document.getElementById('mapPlaca').value   = initial.placa   || headers[3]||headers[0];
-  document.getElementById('mapDefeito').value = initial.defeito || headers[4]||headers[0];
-  document.getElementById('mapReinc').value   = initial.reinc   || headers[5]||headers[0];
-  document.getElementById('mapOS').value      = initial.os      || headers[6]||headers[0];
-  document.getElementById('mapTipoAtivo').value = initial.tipo_ativo || headers[7]||headers[0];
-  document.getElementById('mapModal').style.display='flex';
-}
-function closeMapper(){ document.getElementById('mapModal').style.display='none'; }
-
-document.getElementById('mapCancel').onclick = closeMapper;
-document.getElementById('mapOk').onclick = function(){
-  MAP = {
-    data: document.getElementById('mapData').value,
-    tipo: document.getElementById('mapTipo').value,
-    status: document.getElementById('mapStatus').value,
-    placa: document.getElementById('mapPlaca').value,
-    defeito: document.getElementById('mapDefeito').value,
-    reinc: document.getElementById('mapReinc').value,
-    os: document.getElementById('mapOS').value,
-    tipo_ativo: document.getElementById('mapTipoAtivo').value
-  };
-  if (!MAP.data){ alert('Selecione ao menos a coluna de Data'); return; }
-  RAW = doTransform(window.__lastRows||[], MAP);
-  FILTERED = [];
-  populateFilters(RAW);
-  renderAll();
-  closeMapper();
-};
-
-/* ===================== Filtros ===================== */
+/* Filtros */
 function populateFilters(rows){
   const selMes    = document.getElementById('filterMes');
   const selAno    = document.getElementById('filterAno');
@@ -406,21 +295,18 @@ function populateFilters(rows){
   const selTipoAtivo = document.getElementById('filterTipoAtivo');
 
   function resetOptions(sel, arr, labelAll){
-    if (!sel) return;
     sel.innerHTML = '';
     const o0 = document.createElement('option'); o0.value=''; o0.textContent=labelAll; sel.appendChild(o0);
     for (const {value,label} of arr){ const o=document.createElement('option'); o.value=value; o.textContent=label; sel.appendChild(o); }
   }
-
   const mesesSet = new Set(), anosSet = new Set();
   rows.forEach(r => { if (r.data){ mesesSet.add(monthKey(r.data)); anosSet.add(r.data.getFullYear()); } });
   const meses = [...mesesSet].sort().map(k => ({value:k,label:monthLabel(k)}));
   const anos  = [...anosSet].sort().map(y => ({value:String(y),label:String(y)}));
-
   const tipos  = [...new Set(rows.map(r=>(r.tipo_os||'').toUpperCase()).filter(Boolean))].sort().map(v=>({value:v,label:v}));
   const status = [...new Set(rows.map(r=>codeStatus(r.status||r.s||'')).filter(Boolean))].sort().map(code=>({value:code,label:mapStatusDisplay(code)}));
   const ativos = [...new Set(rows.map(r=>r.carro||r.placa).filter(Boolean))].sort().map(v=>({value:v,label:v}));
-  const tiposAtivo = [...new Set(rows.map(r=>(r.tipo_ativo||'').toUpperCase()).filter(Boolean))].sort().map(v=>({value:v,label:v}));
+  const tiposAtivo = [...new Set(rows.map(r=>r.tipo_ativo||'').filter(Boolean))].sort().map(v=>({value:v,label:v}));
 
   resetOptions(selMes , meses ,'Todos os meses');
   resetOptions(selAno , anos  ,'Todos os anos');
@@ -429,20 +315,19 @@ function populateFilters(rows){
   resetOptions(selAtivo, ativos,'Todos os ativos');
   resetOptions(selTipoAtivo, tiposAtivo,'Todos os tipos de ativo');
 
-  [selMes, selAno, selTipo, selStatus, selAtivo, selTipoAtivo].forEach(el => { if (el) el.onchange = applyFilters; });
-  const grp = document.getElementById('filterGroup'); if (grp) grp.onchange = renderAll;
-  const busca = document.getElementById('filterBusca'); if (busca) busca.oninput = applyFilters;
+  [selMes, selAno, selTipo, selStatus, selAtivo, selTipoAtivo].forEach(el => el.onchange = applyFilters);
+  document.getElementById('filterGroup').onchange = renderAll;
+  document.getElementById('filterBusca').oninput = applyFilters;
 }
-
 function currentBase(){ return FILTERED.length ? FILTERED : RAW; }
 function applyFilters(){
-  const vMes   = (document.getElementById('filterMes')||{}).value || '';
-  const vAno   = (document.getElementById('filterAno')||{}).value || '';
-  const vTipo  = (document.getElementById('filterTipo')||{}).value || '';
-  const vStatus= (document.getElementById('filterStatus')||{}).value || '';
-  const vAtivo = (document.getElementById('filterAtivo')||{}).value || '';
-  const vTipoAtivo = (document.getElementById('filterTipoAtivo')||{}).value || '';
-  const vBusca = ((document.getElementById('filterBusca')||{}).value || '').trim().toUpperCase();
+  const vMes   = document.getElementById('filterMes').value || '';
+  const vAno   = document.getElementById('filterAno').value || '';
+  const vTipo  = document.getElementById('filterTipo').value || '';
+  const vStatus= document.getElementById('filterStatus').value || '';
+  const vAtivo = (document.getElementById('filterAtivo').value || '').toUpperCase();
+  const vTipoAtivo = (document.getElementById('filterTipoAtivo').value || '').toUpperCase();
+  const vBusca = (document.getElementById('filterBusca').value || '').trim().toUpperCase();
 
   FILTERED = RAW.filter(r => {
     const mk = monthKey(r.data);
@@ -450,8 +335,8 @@ function applyFilters(){
     const t  = (r.tipo_os||'').toUpperCase();
     const s  = codeStatus(r.status||r.s||'');
     const a  = (r.carro||r.placa||'').toUpperCase();
+    const os = (r.numero_os||'').toString().toUpperCase();
     const ta = (r.tipo_ativo||'').toUpperCase();
-    const os = (r.numero_os||r.num_os||'').toString().toUpperCase();
     const def= (r.defeito||'').toUpperCase();
     const hitBusca = !vBusca || os.includes(vBusca) || def.includes(vBusca) || a.includes(vBusca);
 
@@ -459,14 +344,14 @@ function applyFilters(){
            (!vAno || yr===vAno) &&
            (!vTipo || t===vTipo) &&
            (!vStatus || s===vStatus) &&
-           (!vAtivo || a=== (vAtivo||'').toUpperCase()) &&
+           (!vAtivo || a===vAtivo) &&
            (!vTipoAtivo || ta===vTipoAtivo) &&
            hitBusca;
   });
   renderAll();
 }
 
-/* ===================== Agregações e KPIs ===================== */
+/* Agregações */
 function aggregateCounts(rows,keyFn){
   const by = {};
   for (const r of rows){
@@ -505,7 +390,7 @@ function aggregateMtbf(rows,keyFn){
   const corr = rows.filter(r=>(r.tipo_os||'').toUpperCase().includes('CORRET'));
   const byV = new Map();
   for(const r of corr){
-    const v=r.carro||r.placa||'';
+    const v=r.carro||r.placa||''; if(!v) continue;
     if(!byV.has(v)) byV.set(v,[]);
     byV.get(v).push(r.data);
   }
@@ -524,8 +409,6 @@ function aggregateMtbf(rows,keyFn){
 function computeStats(rows){
   const total=rows.length, tipoCounts={}, statusCounts={};
   let prev=0,corr=0,abertas=0,fechadas=0,reincSoma=0,reincQtde=0;
-  const porV=new Map();
-
   for (const r of rows){
     const tipo=(r.tipo_os||'').toUpperCase();
     const s=codeStatus(r.status||r.s||'');
@@ -536,116 +419,99 @@ function computeStats(rows){
     if(s==='A') abertas++;
     if(s==='F') fechadas++;
     const rein=(r.reinc||'').toString().toUpperCase();
-    if(rein){ reincQtde++; if(rein.startsWith('S')) reincSoma++; }
-    if(tipo.includes('CORRET')){
-      const v=r.carro||r.placa||'';
-      if(!porV.has(v)) porV.set(v,[]);
-      porV.get(v).push(r.data);
-    }
+    if(rein){ rein.startsWith('S') && (reincSoma++); reincQtde++; }
   }
-  const diffs=[];
-  for(const [v,arr] of porV.entries()){
-    arr.sort((a,b)=>a-b);
-    for(let i=1;i<arr.length;i++){
-      const d=(arr[i]-arr[i-1])/(1000*60*60*24);
-      if(isFinite(d)&&d>=0) diffs.push(d);
-    }
-  }
-  const mtbfGeral = diffs.length? diffs.reduce((x,y)=>x+y,0)/diffs.length : 0;
-
+  /* MTBF geral: reaproveitado em aggregateMtbf para linha */
+  const mtbf = aggregateMtbf(rows, monthKey);
+  const mtbfVals = Object.values(mtbf);
+  const mtbfGeral = mtbfVals.length? mtbfVals.reduce((x,y)=>x+y,0)/mtbfVals.length : 0;
   return { total, prev, corr, abertas, fechadas, tipoCounts, statusCounts, reincPct:(reincQtde?reincSoma/reincQtde:0), mtbfGeral };
 }
 
-/* ===================== Gráficos ===================== */
-function datasetCfg(label,data,role='neu',type='bar'){
-  const c = role==='neg'?COL.neg : role==='pos'?COL.pos : COL.neu;
-  const cfg={label,data};
-  if(type==='line'){ cfg.borderColor=c; cfg.backgroundColor=c+'33'; cfg.tension=.35; cfg.fill=true; cfg.pointRadius=3; }
-  else if(type==='doughnut'){ cfg.backgroundColor=[COL.pos,COL.neg,COL.neu]; cfg.borderColor='#fff'; cfg.borderWidth=1; }
-  else { cfg.backgroundColor=c; cfg.borderColor='#fff'; cfg.borderWidth=1; }
-  return cfg;
-}
+/* Chart helpers */
 function upsertChart(id,cfg){
   const ctx=document.getElementById(id).getContext('2d');
   if(charts[id]) charts[id].destroy();
   charts[id]=new Chart(ctx,cfg);
 }
+function datasetCfg(label,data,role='neu',type='bar'){
+  const color = role==='neg'?COL.neg : role==='pos'?COL.pos : COL.neu;
+  const cfg={label,data};
+  if(type==='line'){ cfg.borderColor=color; cfg.backgroundColor=color+'33'; cfg.tension=.35; cfg.fill=true; cfg.pointRadius=2; }
+  else if(type==='doughnut'){ cfg.backgroundColor=data.map((_,i)=>i%2?COL.neu:COL.neg); }
+  else { cfg.backgroundColor=color; cfg.borderColor='#fff'; cfg.borderWidth=1; }
+  return cfg;
+}
 
-/* ===================== Renderização ===================== */
+/* Render principal */
 function renderAll(){
   const base = currentBase();
   const stats= computeStats(base);
 
   // KPIs
-  document.getElementById('kpiTotal').textContent  = BR.format(stats.total);
-  document.getElementById('kpiPrev').textContent   = BR.format(stats.prev);
-  document.getElementById('kpiCorr').textContent   = BR.format(stats.corr);
-  document.getElementById('kpiAberta').textContent = BR.format(stats.abertas);
-  document.getElementById('kpiFechada').textContent= BR.format(stats.fechadas);
-  document.getElementById('kpiReinc').textContent  = PCT.format(stats.reincPct);
-  document.getElementById('kpiMtbf').textContent   = BR.format((stats.mtbfGeral||0).toFixed(1));
+  kpiTotal.textContent  = BR.format(stats.total);
+  kpiPrev.textContent   = BR.format(stats.prev);
+  kpiCorr.textContent   = BR.format(stats.corr);
+  kpiAberta.textContent = BR.format(stats.abertas);
+  kpiFechada.textContent= BR.format(stats.fechadas);
+  kpiReinc.textContent  = PCT.format(stats.reincPct);
+  kpiMtbf.textContent   = BR.format((stats.mtbfGeral||0).toFixed(1));
 
-  // Donuts — Tipo O.S com paleta da marca
-  const tipoLabels = Object.keys(stats.tipoCounts);
-  const tipoData   = Object.values(stats.tipoCounts);
-  const tipoColors = tipoLabels.map(colorTipoOS);
-  upsertChart('chartTipo',{
-    type:'doughnut',
+  // doughnuts
+  const tipoLabels=Object.keys(stats.tipoCounts), tipoData=Object.values(stats.tipoCounts);
+  const tipoColors=tipoLabels.map(l=> l.includes('CORRET')?COL.neg : (l.includes('PREVENT')?COL.pos:COL.neu));
+  upsertChart('chartTipo',{type:'doughnut',
     data:{labels:tipoLabels,datasets:[{label:'O.S',data:tipoData,backgroundColor:tipoColors,borderColor:'#fff',borderWidth:1}]},
-    options:{plugins:{legend:{position:'bottom'}}, cutout:'55%'}
+    options:{maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}
   });
-
-  // Status
   const stLabels=Object.keys(stats.statusCounts), stData=Object.values(stats.statusCounts);
   const stColors=stLabels.map(l=> l==='Aberta'?COL.neg : (l==='Fechada'?COL.pos:COL.neu));
-  upsertChart('chartStatus',{
-    type:'doughnut',
+  upsertChart('chartStatus',{type:'doughnut',
     data:{labels:stLabels,datasets:[{label:'Status',data:stData,backgroundColor:stColors,borderColor:'#fff',borderWidth:1}]},
-    options:{plugins:{legend:{position:'bottom'}}, cutout:'55%'}
+    options:{maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom'}}}
   });
 
-  // Período (mensal/semanal)
+  // período
   const grouping=getGrouping(), keyFn= grouping==='semanal'? isoWeekKey : monthKey, lbFn= grouping==='semanal'? weekLabel : monthLabel, perLbl = grouping==='semanal'?'Semana':'Mês';
-  document.getElementById('titleOsPeriod').textContent=`Total de O.S e Abertas por ${perLbl}`;
-  document.getElementById('titleCPPeriod').textContent=`Corretiva x Preventiva por ${perLbl}`;
-  document.getElementById('titleReinc').textContent   =`Reincidência de corretivas (${perLbl})`;
-  document.getElementById('titleMtbf').textContent    =`MTBF (${perLbl})`;
-  document.getElementById('titleBor').textContent     =`O.S (Borracharia) por ${perLbl}`;
-  document.getElementById('titleLav').textContent     =`O.S (Lavagem) por ${perLbl}`;
-  document.getElementById('titleLavLub').textContent  =`Lavar x Lubrificar por ${perLbl}`;
-  document.getElementById('labelDelta').textContent   =(grouping==='semanal'?'Δ vs semana ant.':'Δ vs mês ant.');
+  titleOsPeriod.textContent=`Total de O.S e Abertas por ${perLbl}`;
+  titleCPPeriod.textContent=`Corretiva x Preventiva por ${perLbl}`;
+  titleReinc.textContent   =`Reincidência de corretivas (${perLbl})`;
+  titleMtbf.textContent    =`MTBF (${perLbl})`;
+  titleBor.textContent     =`O.S (Borracharia) por ${perLbl}`;
+  titleLav.textContent     =`O.S (Lavagem) por ${perLbl}`;
+  titleLavLub.textContent  =`Lavar x Lubrificar por ${perLbl}`;
+  labelDelta.textContent   =(grouping==='semanal'?'Δ vs semana ant.':'Δ vs mês ant.');
 
   const byCounts=aggregateCounts(base,keyFn), byCP=aggregateCP(base,keyFn), reincR=aggregateReinc(base,keyFn), mtbf=aggregateMtbf(base,keyFn);
   const keys=Object.keys(byCounts).sort(), labels=keys.map(lbFn);
 
-  upsertChart('chartOsPeriod',{
-    type:'bar',
-    data:{labels,datasets:[datasetCfg('Total O.S',keys.map(k=>byCounts[k].total),'neu'),datasetCfg('Abertas',keys.map(k=>byCounts[k].abertas),'neg')]},
+  upsertChart('chartOsPeriod',{type:'bar',
+    data:{labels,datasets:[
+      {label:'Total O.S',data:keys.map(k=>byCounts[k].total),backgroundColor:COL.neu},
+      {label:'Abertas',  data:keys.map(k=>byCounts[k].abertas),backgroundColor:COL.neg}]},
     options:{responsive:true,scales:{y:{beginAtZero:true}}}
   });
-  upsertChart('chartCPPeriod',{
-    type:'bar',
-    data:{labels,datasets:[datasetCfg('Corretiva',keys.map(k=>byCP[k]?.corr||0),'neg'),datasetCfg('Preventiva',keys.map(k=>byCP[k]?.prev||0),'pos')]},
+  upsertChart('chartCPPeriod',{type:'bar',
+    data:{labels,datasets:[
+      {label:'Corretiva',data:keys.map(k=>byCP[k]?.corr||0),backgroundColor:COL.neg},
+      {label:'Preventiva',data:keys.map(k=>byCP[k]?.prev||0),backgroundColor:COL.pos}]},
     options:{responsive:true,scales:{y:{beginAtZero:true}}}
   });
-  upsertChart('chartReinc',{
-    type:'line',
-    data:{labels,datasets:[datasetCfg('Reincidência (%)',keys.map(k=>+(((reincR[k]||0)*100).toFixed(1))),'neg','line')]},
+  upsertChart('chartReinc',{type:'line',
+    data:{labels,datasets:[{label:'Reincidência (%)',data:keys.map(k=>+(((reincR[k]||0)*100).toFixed(1))),borderColor:COL.neg,backgroundColor:COL.neg+'33',tension:.35,fill:true}]},
     options:{responsive:true,scales:{y:{beginAtZero:true}}}
   });
-  upsertChart('chartMtbf',{
-    type:'line',
-    data:{labels,datasets:[datasetCfg('MTBF (dias)',keys.map(k=>+(mtbf[k]||0).toFixed(1)),'pos','line')]},
+  upsertChart('chartMtbf',{type:'line',
+    data:{labels,datasets:[{label:'MTBF (dias)',data:keys.map(k=>+(mtbf[k]||0).toFixed(1)),borderColor:COL.pos,backgroundColor:COL.pos+'33',tension:.35,fill:true}]},
     options:{responsive:true,scales:{y:{beginAtZero:true}}}
   });
 
-  // Delta vs período anterior
+  // Delta
   let delta='—';
   if(keys.length>=2){
     const last=byCounts[keys[keys.length-1]].total, prev=byCounts[keys[keys.length-2]].total;
     if(prev>0){ const d=((last-prev)/prev)*100; delta=(d>=0?'+':'')+d.toFixed(1)+'%'; }
-  }
-  document.getElementById('kpiDelta').textContent=delta;
+  } kpiDelta.textContent=delta;
 
   // Top defeitos
   const lst=document.getElementById('listaDefeitos'); lst.innerHTML="";
@@ -661,42 +527,58 @@ function renderAll(){
     const by={},def={};
     for(const r of rows){ const k=keyFn(r.data); if(!k) continue; by[k]=(by[k]||0)+1; const d=r.defeito||''; if(d) def[d]=(def[d]||0)+1; }
     const kk=Object.keys(by).sort(),lbs=kk.map(lbFn);
-    upsertChart('chartBor',{type:'bar',data:{labels:lbs,datasets:[datasetCfg('O.S',kk.map(x=>by[x]),'neu')]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+    upsertChart('chartBor',{type:'bar',data:{labels:lbs,datasets:[{label:'O.S',data:kk.map(x=>by[x]),backgroundColor:COL.neu}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
     const lb=document.getElementById('listaBor'); lb.innerHTML='';
     Object.entries(def).sort((a,b)=>b[1]-a[1]).slice(0,12).forEach(([n,qt])=>{
       const d=document.createElement('div'); d.className='list-item'; d.innerHTML=`<span>${n}</span><span class='badge'>${qt}</span>`; lb.appendChild(d);
     });
   })();
 
-  // Lavagem + tabela
-  (function(){
-    const rows=base.map(r=>({...r,_k: ((r.tipo_os||'')+' '+(r.defeito||'')).toUpperCase()})).filter(r=>/\bLAVAGEM\b|\bLAVAR\b/.test(r._k));
-    const by={}; for(const r of rows){ const k=keyFn(r.data); if(!k) continue; by[k]=(by[k]||0)+1; }
-    const kk=Object.keys(by).sort(),lbs=kk.map(lbFn);
-    upsertChart('chartLav',{type:'bar',data:{labels:lbs,datasets:[datasetCfg('Lavagens',kk.map(x=>by[x]),'pos')]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
-    const tb=document.querySelector('#tLavados tbody'); tb.innerHTML='';
-    rows.sort((a,b)=>b.data-a.data).forEach(r=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>${r.numero_os||r.num_os||''}</td><td>${r.carro||r.placa||''}</td><td>${mapStatusDisplay(r.status||r.s||'')}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td>`;
-      tb.appendChild(tr);
-    });
-  })();
-
-  // Lav. & Lubrificação (comparação + evolução semanal + listas)
+  // Lavagem
   (function(){
     const baseU=base.map(r=>({...r,_k: ((r.tipo_os||'')+' '+(r.defeito||'')).toUpperCase()}));
-    const rowsLav=baseU.filter(r=>/\bLAVAGEM\b|\bLAVAR\b/.test(r._k));
+    const rowsLav=baseU.filter(r=>/LAVAGEM|LAVAR\b/.test(r._k));
+    const by={}; for(const r of rowsLav){ const k=keyFn(r.data); if(!k) continue; by[k]=(by[k]||0)+1; }
+    const kk=Object.keys(by).sort(),lbs=kk.map(lbFn);
+    upsertChart('chartLav',{type:'bar',data:{labels:lbs,datasets:[{label:'Lavagens',data:kk.map(x=>by[x]),backgroundColor:COL.pos}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+    const tb=document.querySelector('#tLavados tbody'); tb.innerHTML='';
+    rowsLav.sort((a,b)=>b.data-a.data).forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>${r.numero_os||''}</td><td>${r.carro||r.placa||''}</td><td>${mapStatusDisplay(r.status||'')}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td>`;
+      tb.appendChild(tr);
+    });
+
+    // tabela "sem lavagem" (se houver base de ativos)
+    const box = document.getElementById('boxSemLav');
+    if (BASE_ATIVOS.size){
+      const ativosLav=new Set(rowsLav.map(r=>r.carro||r.placa).filter(Boolean));
+      const semLav=[...BASE_ATIVOS].filter(a=>!ativosLav.has(a)).sort();
+      const tb2=document.querySelector('#tSemLav tbody'); tb2.innerHTML='';
+      semLav.forEach(a=>{
+        const last = base.filter(r=>(r.carro||r.placa)===a).sort((x,y)=>y.data-x.data)[0];
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${a}</td><td>${last? (last.numero_os||'') : '—'}</td><td>${last? last.data.toLocaleDateString('pt-BR') : '—'}</td>`;
+        tb2.appendChild(tr);
+      });
+      box.style.display='block';
+    } else box.style.display='none';
+  })();
+
+  // Lav & Lub
+  (function(){
+    const baseU=base.map(r=>({...r,_k: ((r.tipo_os||'')+' '+(r.defeito||'')).toUpperCase()}));
+    const rowsLav=baseU.filter(r=>/LAVAGEM|LAVAR\b/.test(r._k));
     const rowsLub=baseU.filter(r=>/LUBR/.test(r._k));
 
+    const grouping=getGrouping(), keyFn= grouping==='semanal'? isoWeekKey : monthKey, lbFn= grouping==='semanal'? weekLabel : monthLabel;
     const byLav={},byLub={};
     for(const r of rowsLav){ const k=keyFn(r.data); if(!k) continue; byLav[k]=(byLav[k]||0)+1; }
     for(const r of rowsLub){ const k=keyFn(r.data); if(!k) continue; byLub[k]=(byLub[k]||0)+1; }
-
     const allKeys=Array.from(new Set([...Object.keys(byLav),...Object.keys(byLub)])).sort();
-    const lbs=allKeys.map(lbFn);
-    upsertChart('chartLavLub',{
-      type:'bar',
-      data:{labels:lbs,datasets:[ datasetCfg('Lavar',allKeys.map(k=>byLav[k]||0),'pos'), datasetCfg('Lubrificar',allKeys.map(k=>byLub[k]||0),'neu') ]},
+    upsertChart('chartLavLub',{type:'bar',
+      data:{labels:allKeys.map(lbFn),datasets:[
+        {label:'Lavar',data:allKeys.map(k=>byLav[k]||0),backgroundColor:COL.pos},
+        {label:'Lubrificar',data:allKeys.map(k=>byLub[k]||0),backgroundColor:COL.neu}]},
       options:{responsive:true,scales:{y:{beginAtZero:true}}}
     });
 
@@ -705,168 +587,129 @@ function renderAll(){
     for(const r of rowsLav){ const k=isoWeekKey(r.data); if(!k) continue; byLavW[k]=(byLavW[k]||0)+1; }
     for(const r of rowsLub){ const k=isoWeekKey(r.data); if(!k) continue; byLubW[k]=(byLubW[k]||0)+1; }
     const allW=Array.from(new Set([...Object.keys(byLavW),...Object.keys(byLubW)])).sort();
-    const lbsW=allW.map(weekLabel);
-    upsertChart('chartLavLubWeek',{
-      type:'line',
-      data:{labels:lbsW,datasets:[ datasetCfg('Lavar (semana)',allW.map(k=>byLavW[k]||0),'pos','line'), datasetCfg('Lubrificar (semana)',allW.map(k=>byLubW[k]||0),'neu','line') ]},
+    upsertChart('chartLavLubWeek',{type:'line',
+      data:{labels:allW.map(weekLabel),datasets:[
+        {label:'Lavar (semana)',data:allW.map(k=>byLavW[k]||0),borderColor:COL.pos,backgroundColor:COL.pos+'33',tension:.35,fill:true},
+        {label:'Lubrificar (semana)',data:allW.map(k=>byLubW[k]||0),borderColor:COL.neu,backgroundColor:COL.neu+'33',tension:.35,fill:true}]},
       options:{responsive:true,scales:{y:{beginAtZero:true}}}
     });
 
-    // tabelas e “sem registros”
+    // detalhes + “sem lubrificação”
     const tb=document.querySelector('#tLubrificados tbody'); tb.innerHTML='';
     rowsLub.sort((a,b)=>b.data-a.data).forEach(r=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>${r.numero_os||r.num_os||''}</td><td>${r.carro||r.placa||''}</td><td>${mapStatusDisplay(r.status||r.s||'')}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td>`;
+      tr.innerHTML = `<td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>${r.numero_os||''}</td><td>${r.carro||r.placa||''}</td><td>${mapStatusDisplay(r.status||'')}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td>`;
       tb.appendChild(tr);
     });
 
-    const ativosAll=new Set(base.map(r=>r.carro||r.placa).filter(Boolean));
-    const ativosLav=new Set(rowsLav.map(r=>r.carro||r.placa).filter(Boolean));
-    const ativosLub=new Set(rowsLub.map(r=>r.carro||r.placa).filter(Boolean));
-    const semLav=[...ativosAll].filter(a=>!ativosLav.has(a)).sort();
-    const semLub=[...ativosAll].filter(a=>!ativosLub.has(a)).sort();
-
-    const lstLav=document.getElementById('listaSemLav'); lstLav.innerHTML='';
-    const lstLub=document.getElementById('listaSemLub'); lstLub.innerHTML='';
-    semLav.slice(0,200).forEach(a=>{
-      const d=document.createElement('div'); d.className='list-item'; d.innerHTML=`<span>${a}</span><span class='badge'>—</span>`; lstLav.appendChild(d);
-    });
-    semLub.slice(0,200).forEach(a=>{
-      const d=document.createElement('div'); d.className='list-item'; d.innerHTML=`<span>${a}</span><span class='badge'>—</span>`; lstLub.appendChild(d);
-    });
+    const box = document.getElementById('boxSemLub');
+    if (BASE_ATIVOS.size){
+      const ativosLub=new Set(rowsLub.map(r=>r.carro||r.placa).filter(Boolean));
+      const semLub=[...BASE_ATIVOS].filter(a=>!ativosLub.has(a)).sort();
+      const tb2=document.querySelector('#tSemLub tbody'); tb2.innerHTML='';
+      semLub.forEach(a=>{
+        const last = base.filter(r=>(r.carro||r.placa)===a).sort((x,y)=>y.data-x.data)[0];
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${a}</td><td>${last? (last.numero_os||'') : '—'}</td><td>${last? last.data.toLocaleDateString('pt-BR') : '—'}</td>`;
+        tb2.appendChild(tr);
+      });
+      box.style.display='block';
+    } else box.style.display='none';
   })();
 
   // O.S abertas
   const tb=document.querySelector('#tAbertas tbody'); tb.innerHTML='';
-  base.filter(r=>codeStatus(r.status||r.s||'')==='A').sort((a,b)=>b.data-a.data).forEach(r=>{
+  base.filter(r=>codeStatus(r.status||'')==='A').sort((a,b)=>b.data-a.data).forEach(r=>{
     const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${r.numero_os||r.num_os||''}</td><td>${r.carro||r.placa||''}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td><td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>Aberta</td>`;
+    tr.innerHTML = `<td>${r.numero_os||''}</td><td>${r.carro||r.placa||''}</td><td>${r.tipo_os||''}</td><td>${r.defeito||''}</td><td>${r.data? r.data.toLocaleDateString('pt-BR'):''}</td><td>Aberta</td>`;
     tb.appendChild(tr);
   });
 }
 
-/* ===================== Fonte de dados: CSV/XLSX local ===================== */
-document.getElementById('fileInput').addEventListener('change', function(ev){
-  const file=ev.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data = new Uint8Array(e.target.result);
-      const wb   = XLSX.read(data,{type:'array'});
-      const ws   = wb.Sheets['Historico_Defeito'] || wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
-      if(!rows.length){ alert('Planilha sem linhas legíveis.'); return; }
-      window.__lastRows = rows.slice();
-      const headers = Object.keys(rows[0]||{});
-      const guess   = autoDetectMap(headers);
-      if(guess.data && guess.tipo && guess.status && guess.placa && guess.defeito && guess.os){
-        RAW = doTransform(rows, guess);
-        FILTERED=[]; populateFilters(RAW); renderAll();
-      } else {
-        showMapper(headers, guess);
-      }
-    }catch(err){
-      console.error(err);
-      alert('Erro ao ler arquivo: '+err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-});
-
-/* ===================== Fonte de dados: Google Sheets ===================== */
-function normalizeSheetsUrl(u){
-  try{
-    const url = new URL(u);
-    if (url.hostname==='docs.google.com' && url.pathname.includes('/spreadsheets/d/')){
-      const parts = url.pathname.split('/');
-      const idIndex = parts.indexOf('d')+1;
-      const id = parts[idIndex];
-      let gid='0';
-      if (url.hash.includes('gid=')) gid = url.hash.split('gid=')[1].split(/(&|$)/)[0];
-      if (url.pathname.endsWith('/export') || url.search.includes('export?format=csv')){
-        return u;
-      }
-      return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-    }
-    return u;
-  }catch(e){ return u; }
-}
+/* ===================== CSV & Google Sheets ===================== */
 function csvToObjects(text){
   const wb = XLSX.read(text, {type:'string'});
   const ws = wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
 }
-
-async function fetchFromUrl(u){
-  const base = normalizeSheetsUrl(u);
-  const candidates = [base];
+function normalizeSheetsUrl(u){
   try{
     const url = new URL(u);
-    if (url.hostname==='docs.google.com' && url.pathname.includes('/spreadsheets/d/')){
-      const parts = url.pathname.split('/');
-      const idIndex = parts.indexOf('d')+1;
-      const id = parts[idIndex];
-      let gid='0';
-      if (url.hash.includes('gid=')) gid = url.hash.split('gid=')[1].split(/(&|$)/)[0];
-      const gviz = `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`;
-      if (!candidates.includes(gviz)) candidates.push(gviz);
+    if (url.hostname==='docs.google.com' && url.pathname.includes('/spreadsheets/')){
+      const parts = url.pathname.split('/'); const idIndex = parts.indexOf('d')+1; const id = parts[idIndex];
+      let gid='0'; if (url.hash.includes('gid=')) gid = url.hash.split('gid=')[1].split(/(&|$)/)[0];
+      if (url.search.includes('output=csv')) return u;
+      return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+    }
+    return u;
+  }catch(e){ return u; }
+}
+async function fetchCsvRows(url){
+  const candidates=[normalizeSheetsUrl(url)];
+  try{
+    const u = new URL(url);
+    if (u.hostname==='docs.google.com' && u.pathname.includes('/spreadsheets/')){
+      const parts = u.pathname.split('/'); const idIndex = parts.indexOf('d')+1; const id = parts[idIndex];
+      let gid='0'; if (u.hash.includes('gid=')) gid = u.hash.split('gid=')[1].split(/(&|$)/)[0];
+      candidates.push(`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${gid}`);
     }
   }catch(e){}
-
-  let lastErr=null;
-  for(const url of candidates){
+  let last=null;
+  for(const c of candidates){
     try{
-      LAST_URL = url; localStorage.setItem('ziran_last_url', url);
-      const res = await fetch(url,{credentials:'omit',cache:'no-store'});
+      const res = await fetch(c,{credentials:'omit',cache:'no-store'});
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       const rows = csvToObjects(text);
-      if(!rows.length) throw new Error('CSV sem linhas legíveis (verifique a aba publicada).');
-
-      window.__lastRows = rows.slice();
-      const headers = Object.keys(rows[0]);
-      const guess   = autoDetectMap(headers);
-      if(guess.data && guess.tipo && guess.status && guess.placa && guess.defeito && guess.os){
-        RAW = doTransform(rows, guess); FILTERED=[]; populateFilters(RAW); renderAll();
-      } else {
-        showMapper(headers, guess);
-      }
-      return;
-    }catch(err){
-      lastErr = err; continue;
-    }
+      if (rows.length) return rows;
+      last = new Error('CSV sem linhas');
+    }catch(err){ last=err; }
   }
-  alert(
-    'Não consegui carregar do Google Sheets.\n' +
-    'Causas comuns:\n' +
-    '• A aba não está Publicada na Web como CSV (em alguns domínios)\n' +
-    '• O link aponta para a planilha errada ou sem #gid da aba desejada\n' +
-    '• O domínio corporativo bloqueia “Publicar na web”\n\n' +
-    'Tente o botão de Upload com um CSV/XLSX baixado da planilha.\n\n' +
-    'Erro técnico: ' + (lastErr ? lastErr.message : '(desconhecido)')
-  );
+  throw last || new Error('Falha ao obter CSV');
 }
 
-/* ===================== Botões / Interação ===================== */
-document.getElementById('btnLoadUrl').addEventListener('click', async ()=>{
-  const u=(document.getElementById('urlInput').value||'').trim();
-  if(!u){ alert('Cole o link do Google Sheets (ou CSV).'); return; }
-  await fetchFromUrl(u);
-});
-document.getElementById('btnRefresh').addEventListener('click', async ()=>{
-  let u = LAST_URL || (localStorage.getItem('ziran_last_url')||'').trim();
-  if(!u){
-    const el = document.getElementById('urlInput');
-    if (el && el.value) u = el.value.trim();
+/* Base de Ativos (1–3 URLs) */
+async function loadBaseAtivos(urlsCSV){
+  BASE_ATIVOS.clear();
+  const urls = (urlsCSV||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if (!urls.length){ document.getElementById('baseInfo').style.display='none'; return; }
+  for (const u of urls){
+    try{
+      const rows = await fetchCsvRows(u);
+      // tenta achar coluna ATIVO (ou parecida)
+      const hdrs = Object.keys(rows[0]||{}).map(h=>String(h));
+      let col = hdrs.find(h=>/^ativo$/i.test(h)) || hdrs.find(h=>/placa|carro|ve[ií]culo|equipamento/i.test(h)) || hdrs[0];
+      rows.forEach(r=>{ const v=(r[col]||'').toString().trim(); if(v) BASE_ATIVOS.add(v); });
+    }catch(e){/* ignora essa aba */}
   }
-  if(!u){ alert('Informe ou carregue uma URL primeiro.'); return; }
-  await fetchFromUrl(u);
+  const info=document.getElementById('baseInfo');
+  info.textContent = `Base de Ativos carregada: ${BASE_ATIVOS.size} ativos únicos`;
+  info.style.display='block';
+}
+
+/* Interação */
+btnLoadUrl.addEventListener('click', async ()=>{
+  const u=urlInput.value.trim(); if(!u) return alert('Cole o link publicado do Google Sheets.');
+  try{
+    const rows = await fetchCsvRows(u);
+    LAST_URL = u; localStorage.setItem('ziran_last_url', u);
+    const headers = Object.keys(rows[0]||{});
+    MAP = autoDetectMap(headers);
+    RAW = transform(rows, MAP);
+    FILTERED=[]; populateFilters(RAW); renderAll();
+  }catch(err){
+    alert('Não consegui carregar do Google Sheets.\n\nErro técnico: '+err.message+'\n\nObservação: abrir o arquivo como file:// não funciona; use Live Server ou publique no Netlify.');
+  }
+});
+btnRefresh.addEventListener('click', async ()=>{
+  const u = LAST_URL || localStorage.getItem('ziran_last_url') || '';
+  if(!u) return alert('Informe ou carregue uma URL primeiro.');
+  btnLoadUrl.click();
 });
 document.getElementById('autoRefresh').addEventListener('change',function(){
-  if(this.checked){ AUTO_T=setInterval(()=>{ if(LAST_URL) fetchFromUrl(LAST_URL); }, 5*60*1000); }
+  if(this.checked){ AUTO_T=setInterval(()=>{ if(LAST_URL) btnLoadUrl.click(); }, 5*60*1000); }
   else { clearInterval(AUTO_T); }
 });
-// Tabs
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -875,29 +718,30 @@ document.querySelectorAll('.tab').forEach(btn=>{
     document.getElementById(btn.dataset.view).classList.add('active');
   });
 });
-// Limpar filtros
-document.getElementById('btnClear').addEventListener('click',function(){
-  ['filterBusca','filterMes','filterAno','filterTipo','filterStatus','filterAtivo','filterTipoAtivo'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
+btnClear.addEventListener('click',()=>{
+  ['filterBusca','filterMes','filterAno','filterTipo','filterStatus','filterAtivo','filterTipoAtivo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   FILTERED=[]; renderAll();
 });
-// Export O.S abertas
-document.getElementById('btnExportCsv').addEventListener('click',function(){
-  const base=(FILTERED.length?FILTERED:RAW);
-  const a=base.filter(r=>codeStatus(r.status||r.s||'')==='A').sort((x,y)=>y.data-x.data);
+btnExportCsv.addEventListener('click',()=>{
+  const base=currentBase().filter(r=>codeStatus(r.status||'')==='A').sort((x,y)=>y.data-x.data);
   const rows=[['NumeroOS','Placa','TipoOS','Defeito','Data','Status']];
-  a.forEach(r=>{
-    rows.push([r.numero_os||'',r.carro||r.placa||'',r.tipo_os||'',r.defeito||'',r.data? r.data.toISOString().slice(0,10):'','Aberta']);
-  });
+  base.forEach(r=>rows.push([r.numero_os||'',r.carro||r.placa||'',r.tipo_os||'',r.defeito||'',r.data? r.data.toISOString().slice(0,10):'','Aberta']));
   const csv=rows.map(line=> line.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const ael=document.createElement('a'); ael.href=url; ael.download='os_abertas.csv'; document.body.appendChild(ael); ael.click();
-  ael.remove(); URL.revokeObjectURL(url);
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='os_abertas.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
-// restaura último link no input
-(function(){ const u=localStorage.getItem('ziran_last_url'); if(u) document.getElementById('urlInput').value=u; })();
+/* Base de Ativos: carrega quando perde foco */
+document.getElementById('baseAtivos').addEventListener('change', async ()=>{
+  await loadBaseAtivos(baseAtivos.value.trim());
+  renderAll();
+});
+
+/* Restaurar último link + auto-carregar se houver */
+(function(){
+  const u=localStorage.getItem('ziran_last_url');
+  if(u){ urlInput.value=u; }
+})();
 </script>
 </body>
 </html>
+
