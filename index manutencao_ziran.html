@@ -54,11 +54,11 @@ th{color:#6b7280;background:#fafafa}
 .badge{background:#f3f4f6;border-radius:999px;padding:2px 8px}
 .list .list-item{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px dashed #eee}
 
-/* Tamanho profissional dos doughnuts */
+/* Doughnuts profissionais */
 .donut-wrap{height:360px; position:relative}
 .donut-wrap canvas{position:absolute; inset:12px}
 
-/* Melhor responsividade */
+/* Responsivo */
 @media(max-width:1100px){
   .app{grid-template-columns:1fr}
   .kpi-row{grid-template-columns:repeat(4,1fr)}
@@ -421,7 +421,6 @@ function computeStats(rows){
     const rein=(r.reinc||'').toString().toUpperCase();
     if(rein){ rein.startsWith('S') && (reincSoma++); reincQtde++; }
   }
-  /* MTBF geral: reaproveitado em aggregateMtbf para linha */
   const mtbf = aggregateMtbf(rows, monthKey);
   const mtbfVals = Object.values(mtbf);
   const mtbfGeral = mtbfVals.length? mtbfVals.reduce((x,y)=>x+y,0)/mtbfVals.length : 0;
@@ -433,14 +432,6 @@ function upsertChart(id,cfg){
   const ctx=document.getElementById(id).getContext('2d');
   if(charts[id]) charts[id].destroy();
   charts[id]=new Chart(ctx,cfg);
-}
-function datasetCfg(label,data,role='neu',type='bar'){
-  const color = role==='neg'?COL.neg : role==='pos'?COL.pos : COL.neu;
-  const cfg={label,data};
-  if(type==='line'){ cfg.borderColor=color; cfg.backgroundColor=color+'33'; cfg.tension=.35; cfg.fill=true; cfg.pointRadius=2; }
-  else if(type==='doughnut'){ cfg.backgroundColor=data.map((_,i)=>i%2?COL.neu:COL.neg); }
-  else { cfg.backgroundColor=color; cfg.borderColor='#fff'; cfg.borderWidth=1; }
-  return cfg;
 }
 
 /* Render principal */
@@ -676,7 +667,6 @@ async function loadBaseAtivos(urlsCSV){
   for (const u of urls){
     try{
       const rows = await fetchCsvRows(u);
-      // tenta achar coluna ATIVO (ou parecida)
       const hdrs = Object.keys(rows[0]||{}).map(h=>String(h));
       let col = hdrs.find(h=>/^ativo$/i.test(h)) || hdrs.find(h=>/placa|carro|ve[ií]culo|equipamento/i.test(h)) || hdrs[0];
       rows.forEach(r=>{ const v=(r[col]||'').toString().trim(); if(v) BASE_ATIVOS.add(v); });
@@ -687,7 +677,7 @@ async function loadBaseAtivos(urlsCSV){
   info.style.display='block';
 }
 
-/* Interação */
+/* Interação (UI) */
 btnLoadUrl.addEventListener('click', async ()=>{
   const u=urlInput.value.trim(); if(!u) return alert('Cole o link publicado do Google Sheets.');
   try{
@@ -730,18 +720,80 @@ btnExportCsv.addEventListener('click',()=>{
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='os_abertas.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
-/* Base de Ativos: carrega quando perde foco */
 document.getElementById('baseAtivos').addEventListener('change', async ()=>{
   await loadBaseAtivos(baseAtivos.value.trim());
   renderAll();
 });
 
-/* Restaurar último link + auto-carregar se houver */
-(function(){
-  const u=localStorage.getItem('ziran_last_url');
-  if(u){ urlInput.value=u; }
-})();
+/* ========= BOOTSTRAP AUTOMÁTICO (com seus links) =========
+   - Carrega O.S e Base de Ativos automaticamente
+   - Aceita também querystring ?data=<url>&ativos=<url1,url2,url3>
+   - Habilita auto-refresh a cada 5 min
+*/
+const DEFAULT_DATA_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpvASqCDth3xG3fayOA20OWTqgGN8ccxd47bbStP69AfPmFStx8EtNzjyj_-FOUx5EWT6ivJbPuXk4/pub?gid=114589310&single=true&output=csv";
+
+const DEFAULT_BASE_ATIVOS =
+  [
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpvASqCDth3xG3fayOA20OWTqgGN8ccxd47bbStP69AfPmFStx8EtNzjyj_-FOUx5EWT6ivJbPuXk4/pub?gid=1731676093&single=true&output=csv", // Caminhões
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpvASqCDth3xG3fayOA20OWTqgGN8ccxd47bbStP69AfPmFStx8EtNzjyj_-FOUx5EWT6ivJbPuXk4/pub?gid=678265993&single=true&output=csv",  // Implementos
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpvASqCDth3xG3fayOA20OWTqgGN8ccxd47bbStP69AfPmFStx8EtNzjyj_-FOUx5EWT6ivJbPuXk4/pub?gid=1351527469&single=true&output=csv"  // Máquinas
+  ].join(", ");
+
+// helpers de querystring
+function qs(name){ return new URLSearchParams(location.search).get(name) || ""; }
+
+async function bootstrapData(){
+  // querystring tem prioridade
+  const qsData   = qs("data");
+  const qsAtivos = qs("ativos");
+  if (qsData)   localStorage.setItem("ziran_last_url", qsData);
+  if (qsAtivos) localStorage.setItem("ziran_base_ativos", qsAtivos);
+
+  // força defaults se nada vier por querystring
+  if (!qsData && DEFAULT_DATA_URL){
+    localStorage.setItem("ziran_last_url", DEFAULT_DATA_URL);
+  }
+  if (!qsAtivos && DEFAULT_BASE_ATIVOS){
+    localStorage.setItem("ziran_base_ativos", DEFAULT_BASE_ATIVOS);
+  }
+
+  const savedData   = localStorage.getItem("ziran_last_url")   || "";
+  const savedAtivos = localStorage.getItem("ziran_base_ativos")|| "";
+
+  if (document.getElementById("urlInput") && savedData)   urlInput.value = savedData;
+  if (document.getElementById("baseAtivos") && savedAtivos) baseAtivos.value = savedAtivos;
+
+  if (savedAtivos){
+    try{ await loadBaseAtivos(savedAtivos); }catch(e){}
+  }
+
+  if (savedData){
+    try{
+      const rows = await fetchCsvRows(savedData);
+      LAST_URL = savedData;
+      if (!MAP){
+        const headers = Object.keys(rows[0]||{});
+        MAP = autoDetectMap(headers);
+      }
+      RAW = transform(rows, MAP);
+      FILTERED = [];
+      populateFilters(RAW);
+      renderAll();
+
+      // liga auto-refresh
+      const cb = document.getElementById('autoRefresh');
+      if (cb && !cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change')); }
+    }catch(err){
+      alert(
+        "Não consegui carregar do Google Sheets.\n\n" +
+        "Verifique se a aba segue publicada no formato /pub?...&output=csv.\n\n" +
+        "Erro técnico: " + err.message
+      );
+    }
+  }
+}
+document.addEventListener("DOMContentLoaded", bootstrapData);
 </script>
 </body>
 </html>
-
